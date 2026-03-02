@@ -47,28 +47,48 @@ app.get('/api/geocode', async (req, res) => {
 // ArcGIS-only — no Claude call here. Client calls /api/explain separately.
 const HAZARD_LAYERS = [
   {
-    type: 'Flooding',
-    url: 'https://gis.aucklandcouncil.govt.nz/arcgis/rest/services/NaturalHazards/NaturalHazards_FloodHazard/FeatureServer/0/query',
+    type: 'Flood Prone Areas',
+    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/arcgis/rest/services/Flood_Prone_Areas/FeatureServer/0/query',
   },
   {
-    type: 'Coastal Inundation',
-    url: 'https://gis.aucklandcouncil.govt.nz/arcgis/rest/services/NaturalHazards/NaturalHazards_CoastalHazard/FeatureServer/0/query',
+    type: 'Flood Plains',
+    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/arcgis/rest/services/Flood_Plains/FeatureServer/0/query',
   },
   {
-    type: 'Liquefaction',
-    url: 'https://gis.aucklandcouncil.govt.nz/arcgis/rest/services/NaturalHazards/NaturalHazards_LiquefactionHazard/FeatureServer/0/query',
+    type: 'Coastal Inundation (1% AEP, 0.5m sea level rise)',
+    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Coastal_Inundation_1_AEP_05m_sea_level_rise/FeatureServer/0/query',
   },
   {
-    type: 'Overland Flow',
-    url: 'https://gis.aucklandcouncil.govt.nz/arcgis/rest/services/NaturalHazards/NaturalHazards_OverlandFlow/FeatureServer/0/query',
+    type: 'Coastal Inundation (1% AEP, 1.0m sea level rise)',
+    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Coastal_Inundation_1_AEP_1m_sea_level_rise/FeatureServer/0/query',
   },
   {
-    type: 'Storm Surge',
-    url: 'https://gis.aucklandcouncil.govt.nz/arcgis/rest/services/NaturalHazards/NaturalHazards_StormSurge/FeatureServer/0/query',
+    type: 'Coastal Inundation (1% AEP)',
+    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Coastal_Inundation_1_AEP/FeatureServer/0/query',
   },
   {
-    type: 'Tsunami',
-    url: 'https://gis.aucklandcouncil.govt.nz/arcgis/rest/services/NaturalHazards/NaturalHazards_Tsunami/FeatureServer/0/query',
+    type: 'Coastal Inundation (High Water Levels)',
+    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Coastal_Inundation_High_Water_Levels/FeatureServer/0/query',
+  },
+  {
+    type: 'Flood Sensitive Areas',
+    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Flood_Sensitive_Areas/FeatureServer/0/query',
+  },
+  {
+    type: 'Landslide Susceptibility',
+    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Large_Scale_Landslide_Susceptibility/FeatureServer/0/query',
+  },
+  {
+    type: 'Tsunami Evacuation Zones',
+    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Tsunami_Evacuation_Zones/FeatureServer/0/query',
+  },
+  {
+    type: 'Mean High Water Springs (0.5m sea level rise)',
+    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Mean_High_Water_Springs_05m_sea_level_rise/FeatureServer/0/query',
+  },
+  {
+    type: 'Mean High Water Springs (1.0m sea level rise)',
+    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Mean_High_Water_Springs_10m_sea_level_rise/FeatureServer/0/query',
   },
 ]
 
