@@ -90,6 +90,14 @@ const HAZARD_LAYERS = [
     type: 'Mean High Water Springs (1.0m sea level rise)',
     url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Mean_High_Water_Springs_10m_sea_level_rise/FeatureServer/0/query',
   },
+  {
+    type: 'Coastal Inundation (100yr return, 1.0m sea level rise)',
+    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Coastal_Inundation_100_yr_return_1m_sea_level_rise/FeatureServer/0/query',
+  },
+  {
+    type: 'Overland Flow Paths',
+    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Overland_Flow_Paths/FeatureServer/0/query',
+  },
 ]
 
 async function queryArcGISLayer(layer, lat, lng) {
