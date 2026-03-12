@@ -196,10 +196,40 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <p>
-          Data sourced from Auckland Council ArcGIS services.
-          For informational purposes only — not a substitute for professional advice.
-        </p>
+        <div className="footer-inner">
+          <div className="footer-disclosure">
+            <h3 className="footer-heading">About this tool</h3>
+            <p>
+              This tool is an <strong>indicative guide only</strong>. It is designed to help
+              you understand how natural hazard risks at a specific Auckland property
+              <em> might</em> change over time under different climate futures — not to
+              provide a definitive or engineered assessment.
+            </p>
+            <p>
+              Hazard zone data is sourced from <strong>Auckland Council ArcGIS services</strong> and
+              reflects current council mapping. Climate scenario adjustments are based on
+              sea-level rise projections from the <strong>NZ SeaRise platform</strong> and the
+              Ministry for the Environment's medium-confidence guidance (2024), using a
+              central New Zealand location as reference. Scenario labels correspond broadly
+              to SSP1-2.6 (lower), SSP2-4.5 (current trajectory), and SSP5-8.5 (high).
+              Rainfall risk adjustments are directional estimates only.
+            </p>
+            <p>
+              <strong>Risk scores are ordinal and approximate.</strong> A higher score means
+              relatively greater concern given available data — it does not represent an
+              engineering probability or an insurance assessment. Scores should not be used
+              as the sole basis for any significant financial, legal, or planning decision.
+            </p>
+            <p>
+              Before purchasing, developing, or insuring a property, always consult a
+              qualified engineer or planner, obtain a Land Information Memorandum (LIM) from
+              Auckland Council, and seek independent professional advice.
+            </p>
+          </div>
+          <p className="footer-legal">
+            Data: Auckland Council · NZ SeaRise / MfE (2024) · For informational purposes only.
+          </p>
+        </div>
       </footer>
     </div>
   )

@@ -17,15 +17,19 @@ export default function ScenarioSelector({ scenario, horizon, onScenario, onHori
         <span className="scenario-label">Warming scenario</span>
         <div className="btn-group">
           {SCENARIOS.map(s => (
-            <button
-              key={s.id}
-              className={`btn-option${scenario === s.id ? ' active' : ''}`}
-              onClick={() => onScenario(s.id)}
-              disabled={loading}
-              type="button"
-            >
-              {s.label}
-            </button>
+            <div key={s.id} className="btn-tooltip-wrap">
+              <button
+                className={`btn-option${scenario === s.id ? ' active' : ''}`}
+                onClick={() => onScenario(s.id)}
+                disabled={loading}
+                type="button"
+              >
+                {s.label}
+              </button>
+              {s.tooltip && (
+                <span className="btn-tooltip" role="tooltip">{s.tooltip}</span>
+              )}
+            </div>
           ))}
         </div>
       </div>

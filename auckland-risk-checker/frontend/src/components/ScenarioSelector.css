@@ -60,6 +60,49 @@
   cursor: not-allowed;
 }
 
+/* ── Tooltip wrapper ───────────────────────────────────── */
+.btn-tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.btn-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: 8px 10px;
+  border-radius: 6px;
+  width: 220px;
+  white-space: normal;
+  text-align: left;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Arrow */
+.btn-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1e293b;
+}
+
+.btn-tooltip-wrap:hover .btn-tooltip,
+.btn-tooltip-wrap:focus-within .btn-tooltip {
+  display: block;
+}
+
 /* ── Updating indicator ────────────────────────────────── */
 .scenario-updating {
   font-size: 12px;

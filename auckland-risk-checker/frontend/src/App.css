@@ -167,10 +167,46 @@
 
 /* ── Footer ────────────────────────────────────────────── */
 .footer {
-  text-align: center;
-  padding: 20px 24px;
-  font-size: 12px;
-  color: var(--color-text-muted);
   border-top: 1px solid var(--color-border);
   background: var(--color-surface);
+}
+
+.footer-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 28px 24px 20px;
+}
+
+.footer-disclosure {
+  background: #f8fafc;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+
+.footer-heading {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.footer-disclosure p {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+  margin-bottom: 8px;
+}
+
+.footer-disclosure p:last-child {
+  margin-bottom: 0;
+}
+
+.footer-legal {
+  text-align: center;
+  font-size: 11px;
+  color: var(--color-text-muted);
 }

@@ -15,9 +15,21 @@
 // ── Scenario / horizon options ─────────────────────────────────────────────
 // These are the ONLY labels shown in the UI — RCP values are never exposed.
 export const SCENARIOS = [
-  { id: 'lower',   label: 'Lower warming future' },
-  { id: 'current', label: 'Current trajectory' },
-  { id: 'high',    label: 'High warming future' },
+  {
+    id: 'lower',
+    label: 'Lower warming future',
+    tooltip: 'Strong global emissions cuts (broadly SSP1-2.6). Projects ~0.3 m of sea-level rise by 2090 for NZ. Represents an optimistic but still plausible pathway.',
+  },
+  {
+    id: 'current',
+    label: 'Current trajectory',
+    tooltip: 'Moderate mitigation, roughly aligned with current global policies (broadly SSP2-4.5). Projects ~0.5–0.6 m of sea-level rise by 2090 for NZ.',
+  },
+  {
+    id: 'high',
+    label: 'High warming future',
+    tooltip: 'High-emissions scenario with little mitigation (broadly SSP5-8.5). Projects ~0.7–0.8 m of sea-level rise by 2090 for NZ. Used as a stress-test for planning.',
+  },
 ]
 
 export const HORIZONS = [
@@ -32,9 +44,18 @@ export const HORIZONS = [
 //   coastal  → Coastal Inundation, Storm Surge (driven by sea level rise)
 // Liquefaction is geology-driven: no climate adjustment.
 //
-// Anchors from spec:
-//   "+1 in 2040 under Current trajectory"
-//   "+2 in 2090 under High warming future"
+// Coastal deltas are calibrated against NZ SeaRise / MfE (2024) Table 6,
+// which gives approximate years for absolute SLR heights under each SSP:
+//
+//   Scenario mapping:
+//     lower   ≈ SSP1-2.6 median  (~0.3 m by 2090, ~0.2 m by 2050)
+//     current ≈ SSP2-4.5 median  (~0.5–0.6 m by 2090, ~0.2 m by 2045)
+//     high    ≈ SSP5-8.5 median  (~0.7–0.8 m by 2090, ~0.2 m by 2040)
+//
+//   By 2040 the scenarios have not yet meaningfully diverged (~0.2 m across
+//   the board), so 'current' and 'high' share the same +1 coastal delta.
+//   By 2090 the spread is large (0.3 m vs 0.8 m), so 'high' is scored +2
+//   while 'current' is scored +1 to reflect that differentiation.
 const ADJUSTMENTS = {
   lower: {
     today: { rainfall: 0, coastal: 0 },
@@ -43,13 +64,13 @@ const ADJUSTMENTS = {
   },
   current: {
     today: { rainfall: 0, coastal: 0 },
-    2040:  { rainfall: 1, coastal: 1 },  // spec anchor
-    2090:  { rainfall: 2, coastal: 2 },
+    2040:  { rainfall: 1, coastal: 1 },
+    2090:  { rainfall: 2, coastal: 1 },  // ~0.5–0.6 m SLR (SSP2-4.5 median)
   },
   high: {
     today: { rainfall: 0, coastal: 0 },
     2040:  { rainfall: 1, coastal: 1 },
-    2090:  { rainfall: 2, coastal: 2 },  // spec anchor
+    2090:  { rainfall: 2, coastal: 2 },  // ~0.7–0.8 m SLR (SSP5-8.5 median)
   },
 }
 
