@@ -231,7 +231,8 @@ Example: ["Explanation for hazard 1.", "Explanation for hazard 2."]`
       max_tokens: 1500,
       messages: [{ role: 'user', content: prompt }],
     })
-    const text = message.content[0].text.trim()
+    const raw = message.content[0].text.trim()
+    const text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
     const explanations = JSON.parse(text)
     return Array.isArray(explanations) ? explanations : []
   } catch (err) {
