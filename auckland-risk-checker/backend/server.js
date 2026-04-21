@@ -100,7 +100,8 @@ const HAZARD_LAYERS = [
   },
   {
     type: 'Coastal Erosion',
-    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Coastal_Erosion_Hazard_Areas/FeatureServer/0/query',
+    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/arcgis/rest/services/Susceptible_Areas_ASCIE_2130_RCP85_Regional/FeatureServer/0/query',
+    buffer: 50, // polyline layer — query within 50 m of the property point
   },
 ]
 
@@ -115,6 +116,11 @@ async function queryArcGISLayer(layer, lat, lng) {
     returnGeometry: 'false',
     f: 'json',
   })
+
+  if (layer.buffer) {
+    params.set('distance', layer.buffer)
+    params.set('units', 'esriSRUnit_Meter')
+  }
 
   try {
     const response = await fetch(`${layer.url}?${params}`, {
