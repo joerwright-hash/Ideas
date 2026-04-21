@@ -98,6 +98,10 @@ const HAZARD_LAYERS = [
     type: 'Overland Flow Paths',
     url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Overland_Flow_Paths/FeatureServer/0/query',
   },
+  {
+    type: 'Coastal Erosion',
+    url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Coastal_Erosion_Hazard_Areas/FeatureServer/0/query',
+  },
 ]
 
 async function queryArcGISLayer(layer, lat, lng) {

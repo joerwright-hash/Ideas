@@ -5,15 +5,15 @@
  * Called with `useMemo` in App.jsx so scores update instantly when the user
  * changes scenario or time horizon, without re-fetching any data.
  *
- * Scoring framework (per spec):
- *   Base score per hazard  →  0 (not present) to 3 (high severity)
- *   Climate adjustment      →  +0 to +2 depending on scenario + horizon
- *   Per-hazard cap          →  4 points
- *   Total → risk band:  0-2 Low | 3-5 Moderate | 6-8 High | 9+ Very High
+ * Scoring framework:
+ *   Per-hazard score   →  1 (Very Low) to 5 (Very High)
+ *   Climate adjustment →  +0 to +2 depending on scenario + horizon
+ *   Per-hazard cap     →  5
+ *   Overall score      →  max of individual hazard scores (not sum)
+ *   This prevents a single Very High hazard being masked by averaging.
  */
 
 // ── Scenario / horizon options ─────────────────────────────────────────────
-// These are the ONLY labels shown in the UI — RCP values are never exposed.
 export const SCENARIOS = [
   {
     id: 'lower',
@@ -38,24 +38,36 @@ export const HORIZONS = [
   { id: '2090',  label: '2090' },
 ]
 
+// ── Severity labels ────────────────────────────────────────────────────────
+export const SEVERITY_LABELS = {
+  1: 'Very Low',
+  2: 'Low',
+  3: 'Moderate',
+  4: 'High',
+  5: 'Very High',
+}
+
+const SCORE_TO_BAND = {
+  1: 'very-low',
+  2: 'low',
+  3: 'moderate',
+  4: 'high',
+  5: 'very-high',
+}
+
 // ── Climate adjustments ────────────────────────────────────────────────────
 // Two hazard groups respond to climate change:
-//   rainfall → Flooding, Overland Flow, Landslip (driven by heavier rain)
-//   coastal  → Coastal Inundation, Storm Surge (driven by sea level rise)
-// Liquefaction is geology-driven: no climate adjustment.
+//   rainfall → Flood, Overland Flow, Landslide (driven by heavier rain)
+//   coastal  → Coastal Inundation, Storm Surge, Coastal Erosion (SLR)
 //
-// Coastal deltas are calibrated against NZ SeaRise / MfE (2024) Table 6,
-// which gives approximate years for absolute SLR heights under each SSP:
+// Calibrated against NZ SeaRise / MfE (2024) Table 6:
+//   lower   ≈ SSP1-2.6 median  (~0.3 m by 2090)
+//   current ≈ SSP2-4.5 median  (~0.5–0.6 m by 2090)
+//   high    ≈ SSP5-8.5 median  (~0.7–0.8 m by 2090)
 //
-//   Scenario mapping:
-//     lower   ≈ SSP1-2.6 median  (~0.3 m by 2090, ~0.2 m by 2050)
-//     current ≈ SSP2-4.5 median  (~0.5–0.6 m by 2090, ~0.2 m by 2045)
-//     high    ≈ SSP5-8.5 median  (~0.7–0.8 m by 2090, ~0.2 m by 2040)
-//
-//   By 2040 the scenarios have not yet meaningfully diverged (~0.2 m across
-//   the board), so 'current' and 'high' share the same +1 coastal delta.
-//   By 2090 the spread is large (0.3 m vs 0.8 m), so 'high' is scored +2
-//   while 'current' is scored +1 to reflect that differentiation.
+//   By 2040 scenarios have not yet meaningfully diverged (~0.2 m across all),
+//   so current/high share the same +1 coastal delta.
+//   By 2090 the spread is large, so high is +2 while current stays +1.
 const ADJUSTMENTS = {
   lower: {
     today: { rainfall: 0, coastal: 0 },
@@ -65,82 +77,98 @@ const ADJUSTMENTS = {
   current: {
     today: { rainfall: 0, coastal: 0 },
     2040:  { rainfall: 1, coastal: 1 },
-    2090:  { rainfall: 2, coastal: 1 },  // ~0.5–0.6 m SLR (SSP2-4.5 median)
+    2090:  { rainfall: 2, coastal: 1 },
   },
   high: {
     today: { rainfall: 0, coastal: 0 },
     2040:  { rainfall: 1, coastal: 1 },
-    2090:  { rainfall: 2, coastal: 2 },  // ~0.7–0.8 m SLR (SSP5-8.5 median)
+    2090:  { rainfall: 2, coastal: 2 },
   },
 }
 
 // ── Hazard → adjustment group ──────────────────────────────────────────────
+// Uses substring matching because layer type strings are long and varied.
 function hazardGroup(type) {
-  if (['Flooding', 'Overland Flow', 'Landslip'].includes(type)) return 'rainfall'
-  if (['Coastal Inundation', 'Storm Surge'].includes(type))      return 'coastal'
-  return 'other' // Liquefaction, Tsunami, Volcanic — no climate adjustment
+  const t = type.toLowerCase()
+  if (t.includes('flood') || t.includes('overland flow') || t.includes('landslide') || t.includes('landslip')) {
+    return 'rainfall'
+  }
+  if (t.includes('coastal') || t.includes('storm surge') || t.includes('mean high water') || t.includes('erosion')) {
+    return 'coastal'
+  }
+  return 'other' // Tsunami, Liquefaction — no climate adjustment
 }
 
-// ── Base score from ArcGIS attribute values ────────────────────────────────
-// We don't know the exact attribute names from each layer in advance, so we
-// search all attribute values for severity keywords.
-// If none are found, we default to 2 (moderate) — the property IS in a zone.
+// ── Base score from ArcGIS attribute values (1–5 scale) ───────────────────
+// Searches all attribute values for severity keywords.
+// Detected hazards start at a minimum of 2 (Low) — being in a mapped zone
+// means something. Higher keywords push the score toward 4–5.
 function baseScore(hazard) {
+  const type = hazard.type.toLowerCase()
   const vals = Object.values(hazard.attributes || {}).map(v => String(v).toLowerCase())
   const has = (...kws) => vals.some(v => kws.some(k => v.includes(k)))
 
-  switch (hazard.type) {
-    case 'Flooding':
-    case 'Overland Flow':
-      if (has('very high', 'high', 'frequent')) return 3
-      return 2
-
-    case 'Coastal Inundation':
-    case 'Storm Surge':
-      if (has('very high', 'frequent', 'permanent')) return 3
-      return 2
-
-    case 'Liquefaction':
-      if (has('very high')) return 3
-      if (has('high'))      return 2
-      return 1  // low / present in zone
-
-    case 'Landslip':
-      if (has('very high')) return 3
-      if (has('high'))      return 2
-      return 1  // moderate
-
-    default:
-      return 2  // present in some other hazard zone
+  if (type.includes('flood plain')) {
+    // 1% AEP (100-year) floodplain — High by default
+    if (has('very high', 'frequent')) return 5
+    return 4
   }
+
+  if (type.includes('flood prone') || type.includes('overland flow') || type.includes('flood sensitive')) {
+    if (has('very high')) return 5
+    if (has('high'))      return 4
+    return 3
+  }
+
+  if (type.includes('coastal inundation') || type.includes('storm surge') || type.includes('mean high water')) {
+    if (has('very high', 'frequent', 'permanent')) return 5
+    return 3
+  }
+
+  if (type.includes('erosion')) {
+    if (has('very high')) return 5
+    if (has('high'))      return 4
+    return 3
+  }
+
+  if (type.includes('landslide') || type.includes('landslip')) {
+    if (has('very high')) return 5
+    if (has('high'))      return 4
+    return 2
+  }
+
+  if (type.includes('liquefaction')) {
+    if (has('very high')) return 5
+    if (has('high'))      return 4
+    return 2
+  }
+
+  return 3 // default: detected in a hazard zone = Moderate
 }
 
 // ── Main export: compute scores for the full hazard list ───────────────────
 // Returns:
-//   perHazard  — [{ type, base, delta, score }]  one entry per hazard
-//   total      — sum of all hazard scores
-//   band       — css-safe key: 'low' | 'moderate' | 'high' | 'very-high'
-//   bandLabel  — display text: 'Low' | 'Moderate' | 'High' | 'Very High'
+//   perHazard  — [{ type, base, delta, score, severity }]
+//   total      — max score across all hazards (not sum)
+//   band       — css-safe key: 'very-low' | 'low' | 'moderate' | 'high' | 'very-high'
+//   bandLabel  — display text matching SEVERITY_LABELS
 export function computeScores(hazards, scenario, horizon) {
   const adj = ADJUSTMENTS[scenario]?.[horizon] ?? { rainfall: 0, coastal: 0 }
 
   const perHazard = hazards.map(h => {
-    const base  = baseScore(h)
-    const group = hazardGroup(h.type)
-    const delta = group === 'rainfall' ? adj.rainfall
-                : group === 'coastal'  ? adj.coastal
-                : 0
-    const score = Math.min(4, base + delta)  // cap at 4 per hazard
-    return { type: h.type, base, delta, score }
+    const base     = baseScore(h)
+    const group    = hazardGroup(h.type)
+    const delta    = group === 'rainfall' ? adj.rainfall
+                   : group === 'coastal'  ? adj.coastal
+                   : 0
+    const score    = Math.min(5, base + delta)
+    const severity = SEVERITY_LABELS[score]
+    return { type: h.type, base, delta, score, severity }
   })
 
-  const total = perHazard.reduce((sum, h) => sum + h.score, 0)
-
-  let band, bandLabel
-  if      (total <= 2) { band = 'low';      bandLabel = 'Low' }
-  else if (total <= 5) { band = 'moderate'; bandLabel = 'Moderate' }
-  else if (total <= 8) { band = 'high';     bandLabel = 'High' }
-  else                 { band = 'very-high';bandLabel = 'Very High' }
+  const total     = perHazard.reduce((max, h) => Math.max(max, h.score), 0)
+  const band      = SCORE_TO_BAND[total] ?? 'moderate'
+  const bandLabel = SEVERITY_LABELS[total] ?? 'Moderate'
 
   return { perHazard, total, band, bandLabel }
 }
