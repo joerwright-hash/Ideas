@@ -72,8 +72,17 @@ function MapUpdater({ lat, lng }) {
   return null
 }
 
-export default function MapView({ lat, lng, hazards = [] }) {
+export default function MapView({ lat, lng, hazards = [], parcelGeometry = null, snappedToParcel = false }) {
   const hazardsWithGeometry = hazards.filter(h => h.geometry)
+
+  const parcelStyle = {
+    color: '#f59e0b',
+    weight: 2.5,
+    opacity: 1,
+    fillColor: '#f59e0b',
+    fillOpacity: 0.06,
+    dashArray: '6 4',
+  }
 
   return (
     <div className="map-wrapper">
@@ -105,12 +114,27 @@ export default function MapView({ lat, lng, hazards = [] }) {
           ))}
         </LayersControl>
 
+        {parcelGeometry && (
+          <GeoJSON
+            key={JSON.stringify(parcelGeometry).slice(0, 40)}
+            data={parcelGeometry}
+            style={parcelStyle}
+          />
+        )}
+
         <Marker position={[lat, lng]}>
-          <Popup>Property location</Popup>
+          <Popup>{snappedToParcel ? 'Snapped to parcel centroid' : 'Geocoded location'}</Popup>
         </Marker>
 
         <MapUpdater lat={lat} lng={lng} />
       </MapContainer>
+
+      {snappedToParcel && (
+        <div className="map-parcel-badge">
+          <span className="map-parcel-dot" />
+          Assessed from parcel centroid
+        </div>
+      )}
 
       {hazardsWithGeometry.length > 0 && (
         <div className="map-legend">

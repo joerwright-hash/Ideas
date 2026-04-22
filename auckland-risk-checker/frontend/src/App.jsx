@@ -13,6 +13,8 @@ export default function App() {
 
   // Raw ArcGIS hazard data — fetched once per address search
   const [hazards, setHazards] = useState(null)          // hazard[]
+  const [parcelGeometry, setParcelGeometry] = useState(null)
+  const [snappedToParcel, setSnappedToParcel] = useState(false)
 
   // Claude explanations — re-fetched when scenario or horizon changes
   const [explanations, setExplanations]     = useState(null)
@@ -72,6 +74,8 @@ export default function App() {
     setHazards(null)
     setExplanations(null)
     setLocation(null)
+    setParcelGeometry(null)
+    setSnappedToParcel(false)
     setLoading(true)
 
     try {
@@ -92,8 +96,10 @@ export default function App() {
         const err = await hazRes.json()
         throw new Error(err.error || 'Hazard check failed')
       }
-      const { hazards: found } = await hazRes.json()
+      const { hazards: found, parcelGeometry: parcel, snappedToParcel: snapped } = await hazRes.json()
       setHazards(found)
+      setParcelGeometry(parcel ?? null)
+      setSnappedToParcel(snapped ?? false)
 
       // Step 3: Claude explanations (for default scenario + horizon)
       setStep('explaining')
@@ -171,7 +177,13 @@ export default function App() {
                 Location
               </h2>
               <p className="location-name">{location.displayName}</p>
-              <MapView lat={location.lat} lng={location.lng} hazards={hazards ?? []} />
+              <MapView
+                lat={location.lat}
+                lng={location.lng}
+                hazards={hazards ?? []}
+                parcelGeometry={parcelGeometry}
+                snappedToParcel={snappedToParcel}
+              />
             </section>
 
             {hazards !== null && (

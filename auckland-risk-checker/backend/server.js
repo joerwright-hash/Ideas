@@ -172,6 +172,47 @@ async function queryArcGISLayer(layer, lat, lng) {
 }
 
 // GET /api/hazards — ArcGIS query only, returns raw hazard list
+const PARCELS_URL = 'https://services5.arcgis.com/RjM4BJrv5ZkqP4XC/ArcGIS/rest/services/Parcels/FeatureServer/3/query'
+
+// Query LINZ parcels layer to snap geocoded point to the true parcel centroid.
+// Falls back to the original geocoded point if no parcel is found.
+async function getParcel(lat, lng) {
+  const params = new URLSearchParams({
+    geometry: JSON.stringify({ x: lng, y: lat }),
+    geometryType: 'esriGeometryPoint',
+    spatialRel: 'esriSpatialRelIntersects',
+    inSR: '4326',
+    outSR: '4326',
+    outFields: 'OBJECTID_1',
+    returnGeometry: 'true',
+    f: 'json',
+  })
+  try {
+    const response = await fetch(`${PARCELS_URL}?${params}`, {
+      signal: AbortSignal.timeout(8000),
+      headers: { 'User-Agent': 'AucklandPropertyRiskChecker/1.0' },
+    })
+    if (!response.ok) return null
+    const data = await response.json()
+    if (data.error || !data.features?.length) return null
+
+    const rings = data.features[0].geometry?.rings
+    if (!rings?.length) return null
+
+    // Compute centroid by averaging the exterior ring vertices
+    const ring = rings[0]
+    const sum = ring.reduce((acc, [x, y]) => ({ x: acc.x + x, y: acc.y + y }), { x: 0, y: 0 })
+    return {
+      lat: sum.y / ring.length,
+      lng: sum.x / ring.length,
+      geometry: toGeoJSON(data.features[0].geometry),
+    }
+  } catch (err) {
+    console.warn('Parcel lookup failed:', err.message)
+    return null
+  }
+}
+
 app.get('/api/hazards', async (req, res) => {
   const lat = parseFloat(req.query.lat)
   const lng = parseFloat(req.query.lng)
@@ -181,8 +222,17 @@ app.get('/api/hazards', async (req, res) => {
   }
 
   try {
-    const results = await Promise.all(HAZARD_LAYERS.map(l => queryArcGISLayer(l, lat, lng)))
-    return res.json({ hazards: results.filter(Boolean) })
+    const parcel = await getParcel(lat, lng)
+    const queryLat = parcel ? parcel.lat : lat
+    const queryLng = parcel ? parcel.lng : lng
+    if (parcel) console.log(`Snapped to parcel centroid: ${queryLat.toFixed(6)}, ${queryLng.toFixed(6)}`)
+
+    const results = await Promise.all(HAZARD_LAYERS.map(l => queryArcGISLayer(l, queryLat, queryLng)))
+    return res.json({
+      hazards: results.filter(Boolean),
+      parcelGeometry: parcel?.geometry ?? null,
+      snappedToParcel: !!parcel,
+    })
   } catch (err) {
     console.error('Hazard check error:', err)
     return res.status(500).json({ error: 'Failed to check hazard layers' })
