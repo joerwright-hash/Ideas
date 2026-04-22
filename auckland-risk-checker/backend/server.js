@@ -171,8 +171,53 @@ async function queryArcGISLayer(layer, lat, lng) {
   }
 }
 
+const AC_PROPERTY_URL = 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/AC_Property_Query/FeatureServer/0/query'
+
+// GET /api/suggest — address autocomplete from AC_Property_Query
+app.get('/api/suggest', async (req, res) => {
+  const q = (req.query.q || '').trim()
+  if (q.length < 3) return res.json({ suggestions: [] })
+
+  const safe = q.replace(/[^a-zA-Z0-9 ,\-\/]/g, '').toUpperCase().replace(/'/g, "''")
+  if (!safe) return res.json({ suggestions: [] })
+
+  const params = new URLSearchParams({
+    where: `UPPER(FORMATTEDADDRESS) LIKE '%${safe}%'`,
+    outFields: 'FORMATTEDADDRESS',
+    returnGeometry: 'false',
+    returnCentroid: 'true',
+    outSR: '4326',
+    resultRecordCount: '8',
+    orderByFields: 'FORMATTEDADDRESS',
+    f: 'json',
+  })
+
+  try {
+    const response = await fetch(`${AC_PROPERTY_URL}?${params}`, {
+      signal: AbortSignal.timeout(5000),
+      headers: { 'User-Agent': 'AucklandPropertyRiskChecker/1.0' },
+    })
+    if (!response.ok) return res.json({ suggestions: [] })
+    const data = await response.json()
+    if (data.error || !data.features?.length) return res.json({ suggestions: [] })
+
+    const suggestions = data.features
+      .filter(f => f.centroid)
+      .map(f => ({
+        address: f.attributes.FORMATTEDADDRESS,
+        lat: f.centroid.y,
+        lng: f.centroid.x,
+      }))
+
+    return res.json({ suggestions })
+  } catch (err) {
+    console.error('Suggest error:', err.message)
+    return res.json({ suggestions: [] })
+  }
+})
+
 // GET /api/hazards — ArcGIS query only, returns raw hazard list
-const PARCELS_URL = 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/AC_Property_Query/FeatureServer/0/query'
+const PARCELS_URL = AC_PROPERTY_URL
 
 // Query LINZ parcels layer to snap geocoded point to the true parcel centroid.
 // Falls back to the original geocoded point if no parcel is found.

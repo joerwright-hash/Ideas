@@ -114,6 +114,39 @@ export default function App() {
     }
   }
 
+  // ── Suggestion selected: skip geocoding, use parcel centroid directly ───
+  async function handleSuggestSelect(suggestion) {
+    setError(null)
+    setHazards(null)
+    setExplanations(null)
+    setParcelGeometry(null)
+    setSnappedToParcel(false)
+    setLoading(true)
+    setLocation({ lat: suggestion.lat, lng: suggestion.lng, displayName: suggestion.address })
+
+    try {
+      setStep('checking')
+      const hazRes = await fetch(`/api/hazards?lat=${suggestion.lat}&lng=${suggestion.lng}`)
+      if (!hazRes.ok) {
+        const err = await hazRes.json()
+        throw new Error(err.error || 'Hazard check failed')
+      }
+      const { hazards: found, parcelGeometry: parcel, snappedToParcel: snapped } = await hazRes.json()
+      setHazards(found)
+      setParcelGeometry(parcel ?? null)
+      setSnappedToParcel(snapped ?? false)
+
+      setStep('explaining')
+      await fetchExplanations(found, scenario, horizon)
+      setStep('done')
+    } catch (e) {
+      setError(e.message)
+      setStep('idle')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // ── Scenario / horizon change: re-fetch explanations only ───────────────
   function handleScenarioChange(newScenario) {
     setScenario(newScenario)
@@ -138,7 +171,7 @@ export default function App() {
       </header>
 
       <main className="main">
-        <AddressSearch onSearch={handleSearch} loading={loading} />
+        <AddressSearch onSearch={handleSearch} onSuggestSelect={handleSuggestSelect} loading={loading} />
 
         {error && (
           <div className="alert alert-error">
