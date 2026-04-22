@@ -49,7 +49,11 @@ export default function App() {
       const res = await fetch('/api/explain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hazards: hazardList, scenario: scen, horizon: horiz }),
+        body: JSON.stringify({
+          hazards: hazardList.map(({ geometry, ...rest }) => rest),
+          scenario: scen,
+          horizon: horiz,
+        }),
       })
       if (!res.ok) throw new Error('Explanation fetch failed')
       const data = await res.json()
