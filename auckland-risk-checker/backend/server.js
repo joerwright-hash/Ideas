@@ -97,6 +97,7 @@ const HAZARD_LAYERS = [
   {
     type: 'Overland Flow Paths',
     url: 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/Overland_Flow_Paths/FeatureServer/0/query',
+    buffer: 50, // polyline layer — query within 50 m of the property point
   },
   {
     type: 'Coastal Erosion',
