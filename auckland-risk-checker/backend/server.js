@@ -225,7 +225,11 @@ app.get('/api/hazards', async (req, res) => {
     const parcel = await getParcel(lat, lng)
     const queryLat = parcel ? parcel.lat : lat
     const queryLng = parcel ? parcel.lng : lng
-    if (parcel) console.log(`Snapped to parcel centroid: ${queryLat.toFixed(6)}, ${queryLng.toFixed(6)}`)
+    if (parcel) {
+      console.log(`Snapped to parcel centroid: ${queryLat.toFixed(6)}, ${queryLng.toFixed(6)}`)
+    } else {
+      console.log(`No parcel found — using geocoded point: ${lat.toFixed(6)}, ${lng.toFixed(6)}`)
+    }
 
     const results = await Promise.all(HAZARD_LAYERS.map(l => queryArcGISLayer(l, queryLat, queryLng)))
     return res.json({
