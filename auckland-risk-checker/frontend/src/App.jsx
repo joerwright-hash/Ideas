@@ -167,7 +167,7 @@ export default function App() {
                 Location
               </h2>
               <p className="location-name">{location.displayName}</p>
-              <MapView lat={location.lat} lng={location.lng} />
+              <MapView lat={location.lat} lng={location.lng} hazards={hazards ?? []} />
             </section>
 
             {hazards !== null && (

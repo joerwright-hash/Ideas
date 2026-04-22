@@ -105,6 +105,15 @@ const HAZARD_LAYERS = [
   },
 ]
 
+// Convert ArcGIS JSON geometry → GeoJSON geometry
+function toGeoJSON(geometry) {
+  if (!geometry) return null
+  if (geometry.rings)          return { type: 'Polygon',         coordinates: geometry.rings }
+  if (geometry.paths)          return { type: 'MultiLineString',  coordinates: geometry.paths }
+  if (geometry.x !== undefined)return { type: 'Point',            coordinates: [geometry.x, geometry.y] }
+  return null
+}
+
 async function queryArcGISLayer(layer, lat, lng) {
   const params = new URLSearchParams({
     geometry: JSON.stringify({ x: lng, y: lat }),
@@ -113,7 +122,7 @@ async function queryArcGISLayer(layer, lat, lng) {
     inSR: '4326',
     outSR: '4326',
     outFields: '*',
-    returnGeometry: 'false',
+    returnGeometry: 'true',
     f: 'json',
   })
 
@@ -145,7 +154,12 @@ async function queryArcGISLayer(layer, lat, lng) {
       if (k.startsWith('OBJECTID') || k === 'Shape__Area' || k === 'Shape__Length') continue
       filteredAttrs[k] = v
     }
-    return { type: layer.type, source: 'Auckland Council', attributes: filteredAttrs }
+    return {
+      type: layer.type,
+      source: 'Auckland Council',
+      attributes: filteredAttrs,
+      geometry: toGeoJSON(data.features[0].geometry),
+    }
   } catch (err) {
     if (err.name === 'TimeoutError' || err.name === 'AbortError') {
       console.warn(`Layer "${layer.type}" timed out`)

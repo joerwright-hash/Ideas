@@ -3,3 +3,42 @@
   overflow: hidden;
   border: 1px solid var(--color-border);
 }
+
+/* ── Legend ────────────────────────────────────────────── */
+.map-legend {
+  padding: 10px 14px;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.map-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.map-legend-label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* ── Hazard tooltip ────────────────────────────────────── */
+.hazard-tooltip {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
