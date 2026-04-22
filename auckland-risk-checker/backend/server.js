@@ -172,7 +172,7 @@ async function queryArcGISLayer(layer, lat, lng) {
 }
 
 // GET /api/hazards — ArcGIS query only, returns raw hazard list
-const PARCELS_URL = 'https://services5.arcgis.com/RjM4BJrv5ZkqP4XC/ArcGIS/rest/services/Parcels/FeatureServer/3/query'
+const PARCELS_URL = 'https://services1.arcgis.com/n4yPwebTjJCmXB6W/ArcGIS/rest/services/AC_Property_Query/FeatureServer/0/query'
 
 // Query LINZ parcels layer to snap geocoded point to the true parcel centroid.
 // Falls back to the original geocoded point if no parcel is found.
